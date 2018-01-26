@@ -84,3 +84,69 @@ def get_top100_list(refresh_html=False):
 
 #    for i in result :
 #        print(i)
+
+
+
+def get_song_detail(refresh_html=False):
+
+    global source_song_detail
+    path_module = os.path.abspath(__file__)
+    root_dir = os.path.dirname(path_module)
+    path_data_dir = os.path.join(root_dir, 'data')
+    os.makedirs(path_data_dir, exist_ok=True)
+
+    url_song_detail = 'https://www.melon.com/song/detail.htm?songId=30512671'
+    file_path = os.path.join(path_data_dir, 'song_detail.html')
+
+    try:
+        file_mode = 'wt' if refresh_html else 'xt'
+        with open(file_path, file_mode) as f:
+            response = requests.get(url_song_detail)
+            source_song_detail = response.text
+            f.write(source_song_detail)
+        # xt모드에서 있는 파일을 열려고 한 경우 발생하는 예외
+    except FileExistsError:
+        print(f'"{file_path}" file is already exists!')
+
+    #file_path = os.path.join(path_data_dir, 'abc.txt')
+    #print(f'file_path: \n{file_path}')
+    # print(source_song_detail)
+
+    soup_song_detail = BeautifulSoup(source_song_detail, 'lxml')
+    result = []
+    for div in soup_song_detail.find_all('div', class_=['section_info']):
+
+        songname_pattern = div.find('div', class_='song_name').text
+        r1 = re.compile(r'.*?\w.*\t(\w.*?)\r',re.DOTALL)
+        songname= re.search(r1,songname_pattern).group(1)
+
+        artist = div.find('div', class_='artist').find('a').text
+        album =div.find('div', class_='meta').find('dd').find('a').text
+        song_info_detail_meta= div.find('div', class_='meta').find('dl').text
+
+        r2 = re.compile(r'.*?\n(.*?)',re.DOTALL)
+        song_date = r2.search(r2, song_info_detail_meta).group(1)
+        #genre = r2.search(r2, song_info_detail_meta).group(2)
+        #flac = r2.search(r2, song_info_detail_meta).group(3)
+
+
+
+        #r2 = re.complie(r'',re.DOTALL)
+        result.append({
+            'songname': songname,
+            'artist': artist,
+            'album': album,
+            'songdate': song_date,
+         #   'genre': genre,
+         #   'flac' : flac,
+
+        })
+    for div in soup_song_detail.find_all('div', class_='section_lyric'):
+        lyrics = div.find('div', class_='lyric').text
+        #pwkrrhdrk = div.find('div', class_='ellipsis').find('a', class_='artist_name').text
+        result.append({
+            'lyrics': lyrics,
+         #   '작곡' : pwkrrhdrk,
+        })
+
+    return result

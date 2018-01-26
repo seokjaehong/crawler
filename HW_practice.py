@@ -1,58 +1,22 @@
-import re
-#source = open('melon.html', 'rt').read()
-source = '''
-<div class="first-div">
-    <div class="second-div">
-        <span class="span-content">ABCD</span>
-    </div>
-</div>
-'''
-
-# def get_tag_attribute(attribute_name, tag_string):
-#     return re.finditer(r'{attribute_name}',tag_string)
-# example = '<a href="javascript:melon.play.playSong('19030101',30851703);" title="다른사람을 사랑하고 있어 재생">다른사람을 사랑하고 있어</a>'
-# get_tag_attribute('href', example)
-
-
-example = '<a href="javascript:melon.play.playSong(,30851703);" title="다른사람을 사랑하고 있어 재생">다른사람을 사랑하고 있어</a>'
-
-
-#mycode
-# def get_tag_attribute(attribute_name, tag_string) :
-#     findlist = re.findall(r'<a '+ attribute_name +r'\=(.*?)"',tag_string,re.DOTALL)
-#     return findlist
+# import re
+# from bs4 import BeautifulSoup
 #
-# value1=get_tag_attribute('href',example)
-# print(value1)
-# value2=get_tag_attribute('title',example)
-# print(value2)
+# example ="'song_info_date': '\n앨범\nThe Red Summer - Summer Mini Album\n발매일\n2017.07.09\n장르\nDance\nFLAC\nFlac 16bit\n'"
+# r = re.compile(r'.*\n(.*?)\n.*?\n(.*?)\n.*?\n(.*?)\n',re.DOTALL)
+# result1 = re.search(r, example).group(1)
+# result2 = re.search(r, example).group(2)
+# result3 = re.search(r, example).group(3)
+# print(result1,result2,result3)
 
-#instructor code
 
-# # 키워드 인저로 넘겨야되 정규식 안
-# def get_tag_attribute(attirbute_name, tag_string) :
-#     p = re.compile(r'^.*?<.*?{attribute_name}="(?P<value>.*?)".*?>'.format(
-#         attribute_name=attirbute_name
-#     ),re.DOTALL)
-#     m=re.search(p,tag_string)
-#     if m:
-#         return m.group('value')
-#     return ''
+statues = [6,3]
+#statues =[5,4,6]
+# j= max(statues)
+# i= min(statues)
 #
-#
-# result = get_tag_attribute('class',source)
-# print(result)
+# allvaluecount = max(statues)-min(statues)+1
 
-def get_tag_content (tag_string) :
-    #p = re.compile(r'<.*?>(?P<value>.*)<.*?>',re.DOTALL)
-    p = re.compile(r'<.*?>(?P<value>.*)<.*?>',re.DOTALL)
-    m = re.search(p, tag_string)
-    if m:
-        # return m.group('value')
-        return get_tag_content(r)
+result = max(statues)-min(statues)+1-len(statues)
 
-    else :
-        return tag_string
+print(result)
 
-result2 = get_tag_content(source)
-print(result2)
