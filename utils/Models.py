@@ -140,6 +140,12 @@ class Artist:
         self._company = None
         self._gettitle = None
 
+        self._info = {}
+        self._award_history = []
+        self._introduction = {}
+        self._activity_information = {}
+        self._personal_information = {}
+
     def __str__(self):
         return f'{self.name} (구분:{self.gubun}, 장르:{self.genre})'
 
@@ -181,6 +187,9 @@ class Artist:
         #
         #              Heart Shaker
         # </div>
+
+        #기본정보
+
         div_entry = soup.find('div', class_ ='wrap_atist_info')
         artistname = soup.find('p', class_='title_atist').strong.next_sibling.strip()
         dl = div_entry.find('dl', class_='atist_info clfix')
@@ -195,7 +204,31 @@ class Artist:
         company=description_dict.get('소속사')
         gettitle=description_dict.get('수상이력')
 
+        div_detail_entry = soup.find('div', id='conts')
 
+
+        #수상이력
+        award_history_meta=div_detail_entry.find('div', class_='section_atistinfo01')
+        dl2 = award_history_meta.find('dl', class_='list_define').text
+        award_history= dl2.splitlines()
+
+        #가수소개
+        introduction_meta = div_detail_entry.find('div', class_='section_atistinfo02')
+        introduction = introduction_meta.find('div', class_='atist_insdc').get_text(strip=True)
+
+        #활동정보
+        activity_information_meta = div_detail_entry.find('div', class_='section_atistinfo03')
+        dl3= activity_information_meta.find('dl', class_='list_define clfix')
+        items = [item.get_text(strip=True) for item in dl3.contents if not isinstance(item, str)]
+        it = iter(items)
+        activity_information = dict(zip(it, it))
+
+        #개인정보
+        personal_information_meta = div_detail_entry.find('div', class_='section_atistinfo04')
+        dl4 = personal_information_meta.find('dl', class_='list_define clfix')
+        items = [item.get_text(strip=True) for item in dl4.contents if not isinstance(item, str)]
+        it = iter(items)
+        personal_information = dict(zip(it, it))
 
         # 리턴하지말고 데이터들을 자신의 속성으로 할당
         self.name = artistname
@@ -206,6 +239,37 @@ class Artist:
         self._acttype = acttype
         self._company = company
         self._gettitle = gettitle
+        self._award_history = award_history
+        self._introduction = introduction
+        self._activity_information = activity_information
+        self._personal_information = personal_information
+
+
+    @property
+    def award_history(self):
+        # 만약 가지고 있는 생일정보 없다면
+        if not self._award_history:
+            # 받아와서 할당
+            self.get_detail()
+        # 그리고 birthdate
+        return self._award_history
+    @property
+    def introduction(self):
+        if not self._introduction:
+            self.get_detail()
+        return self._introduction
+
+    @property
+    def activity_information(self):
+        if not self._activity_information:
+            self.get_detail()
+        return self._activity_information
+
+    @property
+    def personal_information(self):
+        if not self._personal_information:
+            self.get_detail()
+        return self._personal_information
 
     @property
     def birthdate(self):
