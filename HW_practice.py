@@ -9,14 +9,4 @@
 # print(result1,result2,result3)
 
 
-statues = [6,3]
-#statues =[5,4,6]
-# j= max(statues)
-# i= min(statues)
-#
-# allvaluecount = max(statues)-min(statues)+1
-
-result = max(statues)-min(statues)+1-len(statues)
-
-print(result)
 
