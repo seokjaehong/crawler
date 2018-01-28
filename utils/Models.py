@@ -111,7 +111,7 @@ class MelonCrawler:
         response = requests.get(url, params)
         soup = BeautifulSoup(response.text, 'lxml')
         tr_list = soup.select('form#frm_defaultList table > tbody > tr ')
-        # tr_list = soup.find('form', id='frm_defaultList').find('table').find('tbody').find_all('tr')
+        # tr_list = soup.find('form', id='frm_defaultList').find('table').fi ㅜㅜnd('tbody').find_all('tr')
 
         result = []
         for tr in tr_list:
@@ -134,11 +134,11 @@ class Artist:
         self.gubun = gubun
         self.genre = genre
         ## detail 추가할것
-        self.debutdate = None
-        self.birthdate = None
-        self.acttype = None
-        self.company = None
-        self.gettitle = None
+        self._debutdate = None
+        self._birthdate = None
+        self._acttype = None
+        self._company = None
+        self._gettitle = None
 
     def __str__(self):
         return f'{self.name} (구분:{self.gubun}, 장르:{self.genre})'
@@ -183,16 +183,17 @@ class Artist:
         # </div>
         div_entry = soup.find('div', class_ ='wrap_atist_info')
         artistname = soup.find('p', class_='title_atist').strong.next_sibling.strip()
-        dl = div_entry.find('div', class_='atist_info_clfix')
+        dl = div_entry.find('dl', class_='atist_info clfix')
         items = [item.get_text(strip=True) for item in dl.contents if not isinstance(item, str)]
         it = iter(items)
         description_dict = dict(zip(it,it))
 
-        debutdate = description_dict.get['데뷔']
-        birthdate = description_dict.get['생일']
-        acttype   = description_dict.get['활동유형']
-        company   = description_dict.get['소속사']
-        gettitle     = description_dict.get['수상이력']
+        debutdate = dl.find('dd').find('span', class_='gubun').text
+
+        birthdate=description_dict.get('생일')
+        acttype=description_dict.get('활동유형')
+        company=description_dict.get('소속사')
+        gettitle=description_dict.get('수상이력')
 
 
 
@@ -200,23 +201,100 @@ class Artist:
         self.name = artistname
         #self.gubun = gubun
         #self.genre = genre
-        self.debutdate = debutdate
-        self.birthdate = birthdate
-        self.acttype = acttype
-        self.company = company
-        self.gettitle = gettitle
+        self._debutdate = debutdate
+        self._birthdate = birthdate
+        self._acttype = acttype
+        self._company = company
+        self._gettitle = gettitle
 
-        pass
+    @property
+    def birthdate(self):
+        # 만약 가지고 있는 생일정보 없다면
+        if not self._birthdate:
+            # 받아와서 할당
+            self.get_detail()
+        # 그리고 birthdate
+        return self._birthdate
+    @property
+    def debutdate(self):
+        if not self._debutdate:
+            self.get_detail()
+        return self._debutdate
 
-    def get_song(selfs):
+    @property
+    def acttype(self):
+        if not self._acttype:
+            self.get_detail()
+        return self._acttype
+
+    @property
+    def company(self):
+        if not self._company:
+            self.get_detail()
+        return self._company
+
+    @property
+    def gettitle(self):
+        if not self._gettitle:
+            self.get_detail()
+        return self._gettitle
+
+    def get_song(self,refresh_html='False'):
+        """
+                        자신의 노래리스트를 채움 (노래제목, 가수, 앨범, 장르)          :return: 없음
+                """
+        # 파일위치는 data/artist_detail_{artist_id}.html
+        file_path = os.path.join(DATA_DIR, f'artist_song_detail_{self.artist_id}.html')
+        try:
+            file_mode = 'wt' if refresh_html else 'xt'
+            with open(file_path, file_mode) as f:
+                # url과 parameter구분해서 requests사용
+                url = f'https://www.melon.com/artist/song.htm'
+                params = {
+                    'artistId': self.artist_id,
+                }
+                response = requests.get(url, params)
+                source = response.text
+                # 만약 받은 파일의 길이가 지나치게 짧을 경우 예외를 일으키고
+                # 예외 블럭에서 기록한 파일을 삭제하도록 함
+                file_length = f.write(source)
+                if file_length < 10:
+                    raise ValueError('파일이 너무 짧습니다')
+        except FileExistsError:
+            print(f'"{file_path}" file is already exists!')
+        except ValueError:
+            # 파일이 너무 짧은 경우
+            os.remove(file_path)
+            return
+
+        source = open(file_path, 'rt').read()
+        soup = BeautifulSoup(source, 'lxml')
+
+        tr_list = soup.select('form#frm table > tbody > tr ')
+        # tr_list = soup.find('form', id='frm_defaultList').find('table').fi ㅜㅜnd('tbody').find_all('tr')
+
+        result = []
+        for tr in tr_list:
+            # <a href="javascript:searchLog('web_song','SONG','SO','빨간맛','30512671');melon.play.playSong('26020103',30512671);" class="fc_gray" title="빨간 맛 (Red Flavor)">빨간 맛 (Red Flavor)</a>
+            # song_id = re.search(r"searchLog\(.*'(\d+)'\)", tr.select_one('td:nth-of-type(3) a.fc_gray').get('href')).group(1)
+            song_id = tr.select_one('td:nth-of-type(1) input[type=checkbox]').get('value')
+            title = tr.select_one('td:nth-of-type(3) a.fc_gray').get_text(strip=True)
+            artist = tr.select_one('td:nth-of-type(4) span.checkEllipsis').get_text(
+                strip=True)
+            album = tr.select_one('td:nth-of-type(5) a').get_text(strip=True)
+
+            song = Song(song_id=song_id, title=title, artist=artist, album=album)
+            result.append(song)
+
+        return result
+
+
+
         # # 아티스트의 곡
         # # http://www.melon.com/artist/song.htm?artistId=261143
         # # Artist의 인스턴스 메서드
         #     def get_songs(self)
         #         return Song의 list'''
-
-        pass
-
 
 
 class Song:
@@ -314,3 +392,21 @@ class Song:
             self.get_detail()
         # 그리고 가사정보 출력
         return self._lyrics
+
+    @property
+    def genre(self):
+        # 만약 가지고 있는 가사정보가 없다면
+        if not self._genre:
+            # 받아와서 할당
+            self.get_detail()
+        # 그리고 가사정보 출력
+        return self._genre
+
+    @property
+    def release_date(self):
+        # 만약 가지고 있는 가사정보가 없다면
+        if not self._release_date:
+            # 받아와서 할당
+            self.get_detail()
+        # 그리고 가사정보 출력
+        return self._release_date
